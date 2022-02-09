@@ -1,20 +1,15 @@
 /***************************************************************************\
-* @file led_strip_2022_main.ino
+* @file ArduinoLights2022.ino
 * 
 * @brief 2022 Main Arduino code for Team 102's robot light strip(s)
-* 
-* @author James G. (FRC 102)
-* @author Brayden N. (FRC 102)
-* @date 3 Feb 2022
-* @version 12
 * 
 * @remark There are 2 operation modes (by setting their global pre-compiled vars to true/false): USE_SERIAL & USE_CYCLE (USE_SERIAL takes precedence);
 * @remark USE_SERIAL relies on numerical serial input to change the current pattern while USE_CYCLE switches between different patterns after some time
 * @remark Sending 'b' or 'r' to the serial input will change the alliance mode, which will alter certain patterns
 * @remark (for now, it's only implemented by P_DEFAULT, P_ALLIANCE, and P_A_FIRE)
 * 
+* @see "/README.md"
 * @see https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/
-* @see "\led_strip_2022_main_README.ino"
 \***************************************************************************/
 
 #define APPNAME "FRC102-LED-strip-2022"
@@ -295,5 +290,3 @@ void loop() {
   if (FADE_STRIP > 0) fadeStrip(FADE_STRIP);
   else if (FADE_STRIP == -1) strip.clear();
 }
-
-//*/
