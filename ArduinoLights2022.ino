@@ -56,8 +56,8 @@
 #define C_GREEN        0x0000ff00UL
 #define C_BLUE         0x000814efUL
 #define C_PURPLE       0x0025003cUL // i think this color was originally called "mahoney_purple" or something
-#define OFFICIAL_RED   0x00e20C10UL // (An) Official FRC red color
-#define OFFICIAL_BLUE  0x00005fa8UL // (An) Official FRC blue color
+#define OFFICIAL_RED   0x00ED1C24UL // (2020's) Official FIRST red color (may look different when displayed)
+#define OFFICIAL_BLUE  0x000066B3UL // (2020's) Official FIRST blue color (may look different when displayed)
 
 ////////////////////// Initialize the LED strip library
 Adafruit_DotStar strip = Adafruit_DotStar(
