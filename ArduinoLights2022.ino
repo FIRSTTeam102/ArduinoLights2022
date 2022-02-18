@@ -14,11 +14,13 @@
 
 #define APPNAME "FRC102-LED-strip-2022"
 
+// Imports the Arduino Dotstar library from Adafruit; needs to be installed through Arduino's library manager
+// (library is called "Adafruit Dotstar", to open the manager: Ctrl+Shift+I or "Tools" - > "Manage Libraries...")
 #include <Adafruit_DotStar.h>
 ////////////////////// Strip configuration settings:
 #define NUMPIXELS      30       // Number of LEDs in strip (a)
 #define DATAPIN        13       // Pin for data input
-#define CLOCKPIN       11       // Pin for clock/timer input?
+#define CLOCKPIN       11       // Pin for clock/timer input
 ////////////////////// Output options:
 #define DIMMER         32       // Universal dimmer for all patterns; values greater than 0 will make the strip's colors less bright
 #define LOOP_DELAY     40       // Delay (in milliseconds) between each loop/strip/serial update
@@ -85,7 +87,7 @@ int readSerial() {
       else if (tolower(inp) == 'r') {alliance=1; return pattern;}
       else if (isDigit(inp)) {msg[i]=inp;}
       else
-        if ((inp == '\n' || inp == '\r')) {/**Serial.print("CR or NL received, msg="); Serial.println((int) atoi(msg));/**/}
+        if ((inp == '\n' || inp == '\r')) {/*Serial.print("CR or NL received, msg="); Serial.println((int) atoi(msg));*/}
         else {break;}
       i++;
     }
@@ -171,10 +173,8 @@ void fire(bool flat) {
 }
 
 void alternate(uint32_t a, uint32_t b) {
-  //if (pTick%12==0) {
 	colorStrip(a);
 	for (int i=(pTick%24>=12)?(0):(1); i<NUMPIXELS; i+=2) colorPixel(i,b);
-  //}
 }
 
 void colorPixelUsingSine(uint32_t c) {
@@ -192,7 +192,7 @@ void patterns(int p) {
     pTick = 0;
     oldPattern = pattern;
   }
-////////////////////// Pattern 0: (no pattern)
+////////////////////// Pattern 0: (no pattern; if you want the strip to clear when the strip is at pattern 0, set FADE_STRIP to -1)
 ////////////////////// Pattern 1:
   if (p==1) {
     fire(false);
