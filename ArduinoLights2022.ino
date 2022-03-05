@@ -18,7 +18,7 @@
 // (library is called "Adafruit Dotstar", to open the manager: Ctrl+Shift+I or "Tools" - > "Manage Libraries...")
 #include <Adafruit_DotStar.h>
 ////////////////////// Strip configuration settings:
-#define NUMPIXELS      30       // Number of LEDs in strip (a)
+#define NUMPIXELS      23       // Number of LEDs in strip (usually 30, but we're using a shorter segment)
 #define DATAPIN        13       // Pin for data input
 #define CLOCKPIN       11       // Pin for clock/timer input
 ////////////////////// Output options:
