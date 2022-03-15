@@ -27,8 +27,10 @@
 #define FADE_STRIP     8        // Fade pixels after each loop by this value: 1-255 to fade the strip, 0 to do nothing, and -1 to clear the strip between each loop update
 #define MIN_LIGHT      15       // The minimum light output for any R, G, or B value (use a larger value(s) if the strip's pixels aren't completely fading/dimming properly)
 ////////////////////// Operation modes/settings:
-#define INIT_ALLIANCE  1        // Initial alliance; 1 for red alliance, 2 for blue alliance
+#define SM_PREFIX      "[led_strip_2022]" // Prefix for printing to the serial monitor
+#define INIT_ALLIANCE  2        // Initial alliance; 1 for red alliance, 2 for blue alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
+#define REVERSE_DIR    true     // W.I.P. UNSTABLE! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
 #define USE_SERIAL     true     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
 #define MAX_MSG_LEN    64       // Maximum number of bytes to read & parse from available serial input on each loop
 #define USE_CYCLE      false    // Cycle through various patterns
@@ -101,6 +103,7 @@ int readSerial() {
 void colorPixel(int i, int r, int g, int b) {
   r=constrain(r,0,255); g=constrain(g,0,255); b=constrain(b,0,255);
   if (r<=MIN_LIGHT) r=0; if (g<=MIN_LIGHT) g=0; if (b<=MIN_LIGHT) b=0; // pixel coloring gets finnicky with values close but not equal to 0
+  if (REVERSE_DIR == true) i=NUMPIXELS-i-1; //Serial.print(SM_PREFIX) Serial.print(" i: "); Serial.println(i);
   strip.setPixelColor(i,r,g,b);
 }
 // Set all pixels' colors (using 3 integer values) & apply intensity
@@ -279,7 +282,7 @@ void loop() {
     if ((tick*LOOP_DELAY)/2 > CYCLE_DELAY) {
       tick=0; pattern++;
       if (pattern >= CYCLE_MAX || pattern < CYCLE_MIN) pattern=CYCLE_MIN;
-      Serial.print("[led_strip_2022 Cycle Mode] Switching to next pattern: #");
+      Serial.print(SM_PREFIX); Serial.print(" Cycle mode: Switching to next pattern: #");
       Serial.println(pattern);
     } else tick++;
     patterns(pattern);
