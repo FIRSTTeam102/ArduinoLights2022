@@ -31,7 +31,7 @@
 #define SM_PREFIX      "[led_strip_2022]" // Prefix for printing to the serial monitor
 #define INIT_ALLIANCE  2        // Initial alliance; 1 for red alliance, 2 for blue alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
-#define REVERSE_DIR    true     // Thanks to Calum for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
+#define REVERSE_DIR    true     // Thanks to @lncompetant for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
 #define USE_SERIAL     true     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
 #define MAX_MSG_LEN    64       // Maximum number of bytes to read & parse from available serial input on each loop
 #define USE_CYCLE      false    // Cycle through various patterns
