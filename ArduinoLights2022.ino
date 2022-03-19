@@ -1,7 +1,7 @@
 /***************************************************************************\
-* @file ArduinoLights2022.ino
+* @file ArduinoLights2022.ino (use_PWM branch)
 * 
-* @brief 2022 Main Arduino code for Team 102's robot light strip(s)
+* @brief 2022 Arduino code for Team 102's robot light strip(s) that aims to (hopefully) use PWM as an available control source
 * 
 * @remark There are 2 operation modes (by setting their global pre-compiled vars to true/false): USE_SERIAL & USE_CYCLE (USE_SERIAL takes precedence);
 * @remark USE_SERIAL relies on numerical serial input to change the current pattern while USE_CYCLE switches between different patterns after some time
@@ -13,7 +13,7 @@
 * @see https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/
 \***************************************************************************/
 
-#define APPNAME "FRC102-LED-strip-2022"
+#define APPNAME "FRC102-LED-strip-2022-use-PWM"
 
 // Imports the Arduino Dotstar library from Adafruit; needs to be installed through Arduino's library manager
 // (library is called "Adafruit Dotstar", to open the manager: Ctrl+Shift+I or "Tools" - > "Manage Libraries...")
@@ -22,12 +22,18 @@
 #define NUMPIXELS      23       // Number of LEDs in strip (usually 30, but we're using a shorter segment)
 #define DATAPIN        13       // Pin for data input
 #define CLOCKPIN       11       // Pin for clock/timer input
+#define SERIAL_BAUD    9600     // Baud rate for Serial communications
+#define PWM_PIN1       6        // Pin 1 for reading PWM patterns (only used if USE_PWM is true)
+#define PWM_PIN2       5        // Pin 2 for reading PWM patterns (only used if USE_PWM is true)
+#define PWM_PIN3       3        // Pin 3 for reading PWM patterns (only used if USE_PWM is true)
 ////////////////////// Output options:
 #define DIMMER         32       // Universal dimmer for all patterns; values greater than 0 will make the strip's colors less bright
 #define LOOP_DELAY     40       // Delay (in milliseconds) between each loop/strip/serial update
 #define FADE_STRIP     8        // Fade pixels after each loop by this value: 1-255 to fade the strip, 0 to do nothing, and -1 to clear the strip between each loop update
 #define MIN_LIGHT      15       // The minimum light output for any R, G, or B value (use a larger value(s) if the strip's pixels aren't completely fading/dimming properly)
 ////////////////////// Operation modes/settings:
+#define USE_PWM        true     // trying to implement this...
+
 #define SM_PREFIX      "[led_strip_2022]" // Prefix for printing to the serial monitor
 #define INIT_ALLIANCE  2        // Initial alliance; 1 for red alliance, 2 for blue alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
@@ -74,6 +80,12 @@ int pattern = INIT_PTN;
 int oldPattern = pattern;
 
 ////////////////////// Other general functions:
+// Read pattern from PWM...work in progress
+int readPWM() {
+  // TODO
+  return pattern;
+}
+
 // Read serial input to update current pattern
 // NOTE: if there's a non-digit character, the input stops reading until the next loop
 int readSerial() {
@@ -267,7 +279,7 @@ void patterns(int p) {
 
 void setup() {
   // start serial monitor (communication between arduino & pc)
-  Serial.begin(9600);
+  Serial.begin(SERIAL_BAUD);
   // start LED strip library
   strip.begin();
   strip.clear();
@@ -286,9 +298,12 @@ void loop() {
   if (USE_SERIAL == true) {
     pattern = readSerial();
     patterns(pattern);
-    //Serial.println(pattern);
   }
-  else if (USE_CYCLE == true) {
+  else if (USE_PWM == true) {
+    pattern = readPWM();
+    Serial.print(SM_PREFIX); Serial.print(" PWM mode: current pattern: #"); Serial.println(pattern);
+    patterns(pattern);
+  } else if (USE_CYCLE == true) {
     // update cycle pattern if necessary
     if ((tick*LOOP_DELAY)/2 > CYCLE_DELAY) {
       tick=0; pattern++;
