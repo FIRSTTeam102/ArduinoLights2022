@@ -13,6 +13,6 @@ Patterns that use the `alliance` variable (and can change color based on which a
 | 4 | `P_INTAKE` | 🟣 Purple sine slider on black/off background |
 | 5 | `P_LIMELIGHT` | 🟢 Green (lime) slider on black/off background |
 | 6 | `P_SHOOTING` | 🟠 Orange sine slider on black/off background |
-| 7 | `P_CLIMBING` | ⏩ Double rainbow slider of black/off background |
+| 7 | `P_CLIMBING` | ⏩ Double rainbow slider on black/off background |
 | 8 | `P_ALLIANCE`* | 🚩 Similar to P_AUTO, but represents us on either alliance |
 | 9 | `P_A_FIRE`* | 🔥 Alliance-colored less varied fire for better alliance representation |
