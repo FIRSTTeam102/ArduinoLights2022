@@ -1,4 +1,5 @@
-# Team 102's main Arduino light strip patterns
+# (this branch aims to add support for changing patterns through PWM input instead of reading serial)
+## Team 102's main Arduino light strip patterns
 [Simple online light simulator (written in Python; hosted on https://trinket.io)](https://trinket.io/python/502dfc496f?runOption=run&showInstructions=true)
 
 ## Patterns and (possible) uses
