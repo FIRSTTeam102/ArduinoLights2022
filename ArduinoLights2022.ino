@@ -7,6 +7,7 @@
 * @remark USE_SERIAL relies on numerical serial input to change the current pattern while USE_CYCLE switches between different patterns after some time
 * @remark Sending 'b' or 'r' to the serial input will change the alliance mode, which will alter certain patterns
 * @remark (for now, it's only implemented by P_DEFAULT, P_ALLIANCE, and P_A_FIRE)
+* @remark Reversing the strip (switching the pixel order e.g. 1 to 30, 2 to 29, etc.) is now as easy as setting REVERSE_DIR to true!
 * 
 * @see "/README.md"
 * @see https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/
@@ -30,7 +31,7 @@
 #define SM_PREFIX      "[led_strip_2022]" // Prefix for printing to the serial monitor
 #define INIT_ALLIANCE  2        // Initial alliance; 1 for red alliance, 2 for blue alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
-#define REVERSE_DIR    true     // W.I.P. UNSTABLE! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
+#define REVERSE_DIR    true     // Thanks to Calum for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
 #define USE_SERIAL     true     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
 #define MAX_MSG_LEN    64       // Maximum number of bytes to read & parse from available serial input on each loop
 #define USE_CYCLE      false    // Cycle through various patterns
@@ -99,12 +100,22 @@ int readSerial() {
   } else return pattern;
 }
 
+// Reverse a given pixel index, if the `reverse dir` value is true
+int reverseIndex(int i) {
+  if (REVERSE_DIR == true) return NUMPIXELS-i-1;
+  else return i;
+}
+
+// Get the color value from a pixel (used for adding reverse functionality)
+uint32_t getColorOfPixel(int i) {
+  i=reverseIndex(i); return strip.getPixelColor(i);
+}
+
 // Set a pixel's color (using 3 integer values) & apply intensity
 void colorPixel(int i, int r, int g, int b) {
   r=constrain(r,0,255); g=constrain(g,0,255); b=constrain(b,0,255);
   if (r<=MIN_LIGHT) r=0; if (g<=MIN_LIGHT) g=0; if (b<=MIN_LIGHT) b=0; // pixel coloring gets finnicky with values close but not equal to 0
-  if (REVERSE_DIR == true) i=NUMPIXELS-i-1; //Serial.print(SM_PREFIX) Serial.print(" i: "); Serial.println(i);
-  strip.setPixelColor(i,r,g,b);
+  i=reverseIndex(i); strip.setPixelColor(i,r,g,b);
 }
 // Set all pixels' colors (using 3 integer values) & apply intensity
 void colorStrip(int r, int g, int b) {
@@ -125,7 +136,7 @@ void colorStrip(uint32_t c) {
 // Fade a pixel by a byte (number) from 0 to 255
 // Adapted from Hans Luitjen's fire effect (https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/) based on Mark Kriegsman's "Fire2012"
 void fadePixel(int i, byte amt) {
-  uint32_t c = strip.getPixelColor(i);
+  uint32_t c = getColorOfPixel(i);
   uint8_t r,g,b;
   r=(c&0x00ff0000UL)>>16; g=(c&0x0000ff00UL)>>8; b=(c&0x000000ffUL);
   r-=r*amt/256; g-=g*amt/256; b-=b*amt/256;
