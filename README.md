@@ -1,5 +1,5 @@
 # Team 102's main Arduino light strip patterns
-[Simple online light simulator (in Python; on https://trinket.io)](https://trinket.io/python/502dfc496f?runOption=run&showInstructions=true)
+[Simple online light simulator (written in Python; hosted on https://trinket.io)](https://trinket.io/python/502dfc496f?runOption=run&showInstructions=true)
 
 ## Patterns and (possible) uses
 Patterns that use the `alliance` variable (and can change color based on which alliance we are on) are marked with '*'
