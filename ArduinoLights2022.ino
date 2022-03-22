@@ -23,19 +23,20 @@
 #define DATAPIN        13       // Pin for data input
 #define CLOCKPIN       11       // Pin for clock/timer input
 #define SERIAL_BAUD    9600     // Baud rate for Serial communications
-#define PWM_PIN1       6        // Pin 1 for reading PWM patterns (only used if USE_PWM is true)
-#define PWM_PIN2       5        // Pin 2 for reading PWM patterns (only used if USE_PWM is true)
-#define PWM_PIN3       3        // Pin 3 for reading PWM patterns (only used if USE_PWM is true)
 ////////////////////// Output options:
 #define DIMMER         32       // Universal dimmer for all patterns; values greater than 0 will make the strip's colors less bright
 #define LOOP_DELAY     40       // Delay (in milliseconds) between each loop/strip/serial update
 #define FADE_STRIP     8        // Fade pixels after each loop by this value: 1-255 to fade the strip, 0 to do nothing, and -1 to clear the strip between each loop update
 #define MIN_LIGHT      15       // The minimum light output for any R, G, or B value (use a larger value(s) if the strip's pixels aren't completely fading/dimming properly)
 ////////////////////// Operation modes/settings:
-#define USE_PWM        true     // trying to implement this...
+#define USE_BINARY     true     // trying to implement this...
+#define B_PIN_1        2        // binary pin 1
+#define B_PIN_2        3        // binary pin 2
+#define B_PIN_3        4        // binary pin 3
+#define B_PIN_4        5        // binary pin 4 (used for changing alliance colors)
 
 #define SM_PREFIX      "[led_strip_2022]" // Prefix for printing to the serial monitor
-#define INIT_ALLIANCE  2        // Initial alliance; 1 for red alliance, 2 for blue alliance
+#define INIT_ALLIANCE  1        // Initial alliance; 0 for blue alliance, 1 for red alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
 #define REVERSE_DIR    true     // Thanks to @lncompetant for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
 #define USE_SERIAL     true     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
@@ -78,12 +79,30 @@ int pTick = 0;
 int alliance = INIT_ALLIANCE;
 int pattern = INIT_PTN;
 int oldPattern = pattern;
+int pins[] = {0,0,0,0};
+int pinValue = 0;
 
 ////////////////////// Other general functions:
-// Read pattern from PWM...work in progress
-int readPWM() {
-  // TODO
-  return pattern;
+// Read pattern from binary digital pin inputs
+int readPins() {
+  // Get pin values
+  pins[0] = int(digitalRead(B_PIN_1));
+  pins[1] = int(digitalRead(B_PIN_2));
+  pins[2] = int(digitalRead(B_PIN_3));
+  pins[3] = int(digitalRead(B_PIN_4));
+
+  // Make sure alliance input matches internal setting
+  if (alliance != pins[3]) alliance = pins[3];
+
+  // Compute pattern from other 3 inputs
+  // (thanks @robtillaart: https://forum.arduino.cc/t/converting-binary-strings-to-bytes-integers/212848/2)
+  for (int i = 0; i < 3 i++) {
+    pinValue *= 2; pinValue += (pins[i]==1);
+  }
+
+  // Return computed pattern if it's different from current pattern
+  if (pattern != pinValue) return pinValue;
+  else return pattern;
 }
 
 // Read serial input to update current pattern
@@ -288,6 +307,12 @@ void setup() {
   if (USE_SERIAL != true && USE_CYCLE == true) {
     if (pattern > CYCLE_MAX || pattern < CYCLE_MIN) pattern=CYCLE_MIN;
   }
+
+  // init binary pin modes
+  pinMode(B_PIN_1, INPUT_PULLUP);
+  pinMode(B_PIN_2, INPUT_PULLUP);
+  pinMode(B_PIN_3, INPUT_PULLUP);
+  pinMode(B_PIN_4, INPUT_PULLUP);
 }
 
 void loop() {
@@ -298,10 +323,9 @@ void loop() {
   if (USE_SERIAL == true) {
     pattern = readSerial();
     patterns(pattern);
-  }
-  else if (USE_PWM == true) {
-    pattern = readPWM();
-    Serial.print(SM_PREFIX); Serial.print(" PWM mode: current pattern: #"); Serial.println(pattern);
+  } else if (USE_BINARY == true) {
+    pattern = readPins();
+    //Serial.print(SM_PREFIX); Serial.print(" PWM mode: current pattern: #"); Serial.println(pattern);
     patterns(pattern);
   } else if (USE_CYCLE == true) {
     // update cycle pattern if necessary
