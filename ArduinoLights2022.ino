@@ -39,7 +39,7 @@
 #define INIT_ALLIANCE  1        // Initial alliance; 0 for blue alliance, 1 for red alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
 #define REVERSE_DIR    true     // Thanks to @lncompetant for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
-#define USE_SERIAL     true     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
+#define USE_SERIAL     false     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
 #define MAX_MSG_LEN    64       // Maximum number of bytes to read & parse from available serial input on each loop
 #define USE_CYCLE      false    // Cycle through various patterns
 #define CYCLE_DELAY    5000     // Delay between patterns (in ms)
@@ -96,7 +96,7 @@ int readPins() {
 
   // Compute pattern from other 3 inputs
   // (thanks @robtillaart: https://forum.arduino.cc/t/converting-binary-strings-to-bytes-integers/212848/2)
-  for (int i = 0; i < 3 i++) {
+  for (int i = 0; i < 3; i++) {
     pinValue *= 2; pinValue += (pins[i]==1);
   }
 
