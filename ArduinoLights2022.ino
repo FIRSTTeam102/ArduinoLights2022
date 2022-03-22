@@ -96,6 +96,7 @@ int readPins() {
 
   // Compute pattern from other 3 inputs
   // (thanks @robtillaart: https://forum.arduino.cc/t/converting-binary-strings-to-bytes-integers/212848/2)
+  pinValue = 0;
   for (int i = 0; i < 3; i++) {
     pinValue *= 2; pinValue += (pins[i]==1);
   }
@@ -324,6 +325,7 @@ void loop() {
     pattern = readSerial();
     patterns(pattern);
   } else if (USE_BINARY == true) {
+    //Serial.print(SM_PREFIX); Serial.print(" Binary mode: old pattern: #"); Serial.print(pattern); 
     pattern = readPins();
     //Serial.print(SM_PREFIX); Serial.print(" Binary mode: current pattern: #"); Serial.println(pattern);
     patterns(pattern);
