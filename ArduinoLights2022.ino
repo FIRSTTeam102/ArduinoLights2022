@@ -1,7 +1,7 @@
 /***************************************************************************\
-* @file ArduinoLights2022.ino (use_PWM branch)
+* @file ArduinoLights2022.ino (use_binary branch)
 * 
-* @brief 2022 Arduino code for Team 102's robot light strip(s) that aims to (hopefully) use PWM as an available control source
+* @brief 2022 Arduino code for Team 102's robot light strip(s) that aims to (hopefully) use binary pin input as an available control source
 * 
 * @remark There are 2 operation modes (by setting their global pre-compiled vars to true/false): USE_SERIAL & USE_CYCLE (USE_SERIAL takes precedence);
 * @remark USE_SERIAL relies on numerical serial input to change the current pattern while USE_CYCLE switches between different patterns after some time
@@ -13,7 +13,7 @@
 * @see https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/
 \***************************************************************************/
 
-#define APPNAME "FRC102-LED-strip-2022-use-PWM"
+#define APPNAME "FRC102-LED-strip-2022-use-binary"
 
 // Imports the Arduino Dotstar library from Adafruit; needs to be installed through Arduino's library manager
 // (library is called "Adafruit Dotstar", to open the manager: Ctrl+Shift+I or "Tools" - > "Manage Libraries...")
@@ -325,7 +325,7 @@ void loop() {
     patterns(pattern);
   } else if (USE_BINARY == true) {
     pattern = readPins();
-    //Serial.print(SM_PREFIX); Serial.print(" PWM mode: current pattern: #"); Serial.println(pattern);
+    //Serial.print(SM_PREFIX); Serial.print(" Binary mode: current pattern: #"); Serial.println(pattern);
     patterns(pattern);
   } else if (USE_CYCLE == true) {
     // update cycle pattern if necessary
