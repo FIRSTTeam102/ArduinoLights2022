@@ -1,9 +1,9 @@
 /***************************************************************************\
-* @file ArduinoLights2022.ino
+* @file ArduinoLights2022.ino (use_binary branch)
 * 
-* @brief 2022 Main Arduino code for Team 102's robot light strip(s)
+* @brief 2022 Arduino code for Team 102's robot light strip(s) that aims to (hopefully) use binary pin input as an available control source
 * 
-* @remark There are 2 operation modes (by setting their global pre-compiled vars to true/false): USE_SERIAL & USE_CYCLE (USE_SERIAL takes precedence);
+* @remark There are 3 operation modes (by setting their global pre-compiled vars to true/false): USE_SERIAL & USE_BINARY (USE_SERIAL takes precedence) with a fallback to cycling through;
 * @remark USE_SERIAL relies on numerical serial input to change the current pattern while USE_CYCLE switches between different patterns after some time
 * @remark Sending 'b' or 'r' to the serial input will change the alliance mode, which will alter certain patterns
 * @remark (for now, it's only implemented by P_DEFAULT, P_ALLIANCE, and P_A_FIRE)
@@ -13,7 +13,7 @@
 * @see https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/
 \***************************************************************************/
 
-#define APPNAME "FRC102-LED-strip-2022"
+#define APPNAME "FRC102-LED-strip-2022-use-binary"
 
 // Imports the Arduino Dotstar library from Adafruit; needs to be installed through Arduino's library manager
 // (library is called "Adafruit Dotstar", to open the manager: Ctrl+Shift+I or "Tools" - > "Manage Libraries...")
@@ -22,33 +22,40 @@
 #define NUMPIXELS      23       // Number of LEDs in strip (usually 30, but we're using a shorter segment)
 #define DATAPIN        13       // Pin for data input
 #define CLOCKPIN       11       // Pin for clock/timer input
+#define SERIAL_BAUD    9600     // Baud rate for Serial communications
 ////////////////////// Output options:
 #define DIMMER         32       // Universal dimmer for all patterns; values greater than 0 will make the strip's colors less bright
 #define LOOP_DELAY     40       // Delay (in milliseconds) between each loop/strip/serial update
 #define FADE_STRIP     8        // Fade pixels after each loop by this value: 1-255 to fade the strip, 0 to do nothing, and -1 to clear the strip between each loop update
-#define MIN_LIGHT      15       // The minimum light output for any R, G, or B value (use a larger value(s) if the strip's pixels aren't completely fading/dimming properly)
+#define MIN_LIGHT      15       // The minimum light output for any R, G, or B value (try a larger value(s) if the strip's pixels aren't completely fading/dimming properly)
+////////////////////// Binary input settings:
+#define USE_BINARY     true     // Use 3 of specified input pins to receive a binary number for the current pattern and the 4th pin as a boolean for the current alliance
+#define B_PIN_1        2        // USE_BINARY input pin #1
+#define B_PIN_2        3        // USE_BINARY input pin #2
+#define B_PIN_3        4        // USE_BINARY input pin #3
+#define B_PIN_4        5        // USE_BINARY input pin #4 (used for changing alliance colors)
 ////////////////////// Operation modes/settings:
-#define SM_PREFIX      "[led_strip_2022]" // Prefix for printing to the serial monitor
-#define INIT_ALLIANCE  2        // Initial alliance; 1 for red alliance, 2 for blue alliance
+#define SM_PREFIX      "[led_strip_2022]"        // Prefix for printing to the serial monitor
+// we should use this but we're already using pin 13...
+#define SHOW_STATUS    0        // If greater than 0, toggle the built-in LED every SHOW_STATUS ticks (approx. every # / LOOP_DELAY milliseconds)
+#define INIT_ALLIANCE  1        // Initial alliance; 0 for blue alliance, 1 for red alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
-#define REVERSE_DIR    true     // Thanks to @lncompetant for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
-#define USE_SERIAL     true     // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
+#define REVERSE_DIR    true     // Thanks to @caburum for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
+#define USE_SERIAL     false    // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
 #define MAX_MSG_LEN    64       // Maximum number of bytes to read & parse from available serial input on each loop
 #define USE_CYCLE      false    // Cycle through various patterns
 #define CYCLE_DELAY    5000     // Delay between patterns (in ms)
 #define CYCLE_MIN      1        // Number of the first pattern to show in cycle mode
 #define CYCLE_MAX      7        // Number of the last pattern to show in cycle mode
 ////////////////////// Pattern names (see README file for more info):
-#define P_OFF          0        // (No pattern)
-#define P_DEFAULT      1        // The fire pattern!
-#define P_DISABLED     2        // Alternating orange & black/off
-#define P_AUTO         3        // Opposing blue sliders
+#define P_DISABLED     0        // Alternating orange & black/off
+#define P_TELEOP       1        // The fire pattern!
+#define P_AUTO         2        // Opposing blue sliders
+#define P_             3
 #define P_INTAKE       4        // Purple sine slider on black/off background
 #define P_LIMELIGHT    5        // Green (lime) slider on black/off background
 #define P_SHOOTING     6        // Orange sine slider on black/off background
 #define P_CLIMBING     7        // Double rainbow slider of black/off background
-#define P_ALLIANCE     8        // Similar to P_AUTO, but represents us on either alliance
-#define P_A_FIRE       9        // Alliance-colored less varied fire for better alliance representation
 ////////////////////// Major colors:
 #define C_BLACK        0x00000000UL
 #define C_GRAY         0x007e7e7eUL
@@ -62,18 +69,44 @@
 #define OFFICIAL_RED   0x00ED1C24UL // (2020's) Official FIRST red color (may look different when displayed)
 #define OFFICIAL_BLUE  0x000066B3UL // (2020's) Official FIRST blue color (may look different when displayed)
 
-////////////////////// Initialize the LED strip library
-Adafruit_DotStar strip = Adafruit_DotStar(
-  NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_BGR);
-  
+////////////////////// Variable for the LED strip library (actual initialization is within void setup(){} after checking for pin conflicts)
+Adafruit_DotStar strip = 0;
+
 ////////////////////// Other variables:
 int tick = 0;
 int pTick = 0;
+int sTick = 0;
 int alliance = INIT_ALLIANCE;
 int pattern = INIT_PTN;
 int oldPattern = pattern;
+int pins[] = {0,0,0,0};
+int pinValue = 0;
+bool showStatus = false;
 
 ////////////////////// Other general functions:
+// Read pattern from binary digital pin inputs
+int readPins() {
+  // Get pin values
+  pins[0] = int(digitalRead(B_PIN_1));
+  pins[1] = int(digitalRead(B_PIN_2));
+  pins[2] = int(digitalRead(B_PIN_3));
+  pins[3] = int(digitalRead(B_PIN_4));
+
+  // Make sure alliance input matches internal setting
+  if (alliance != pins[3]) alliance = pins[3];
+
+  // Compute pattern from other 3 inputs
+  // (thanks @robtillaart: https://forum.arduino.cc/t/converting-binary-strings-to-bytes-integers/212848/2)
+  pinValue = 0;
+  for (int i = 0; i < 3; i++) {
+    pinValue *= 2; pinValue += (pins[i]==1);
+  }
+
+  // Return computed pattern if it's different from current pattern
+  if (pattern != pinValue) return pinValue;
+  else return pattern;
+}
+
 // Read serial input to update current pattern
 // NOTE: if there's a non-digit character, the input stops reading until the next loop
 int readSerial() {
@@ -89,9 +122,7 @@ int readSerial() {
       if (tolower(inp) == 'b') {alliance=2; return pattern;}
       else if (tolower(inp) == 'r') {alliance=1; return pattern;}
       else if (isDigit(inp)) {msg[i]=inp;}
-      else
-        if ((inp == '\n' || inp == '\r')) {/*Serial.print("CR or NL received, msg="); Serial.println((int) atoi(msg));*/}
-        else {break;}
+      else if (!(inp == '\n' || inp == '\r')) {break;}
       i++;
     }
     msg[i] = '\0';
@@ -191,8 +222,8 @@ void alternate(uint32_t a, uint32_t b) {
 	for (int i=(pTick%24>=12)?(0):(1); i<NUMPIXELS; i+=2) colorPixel(i,b);
 }
 
-void colorPixelUsingSine(uint32_t c) {
-  colorPixel((map(strip.sine8(pTick*1.4),0,255,0,NUMPIXELS)+(int)floor(NUMPIXELS/2)-1)%NUMPIXELS,c);
+void colorPixelUsingSine(uint32_t c, float speed = 1.7) {
+  colorPixel((map(strip.sine8(pTick*speed),0,255,0,NUMPIXELS)+(int)floor(NUMPIXELS/2)-1)%NUMPIXELS,c);
 }
 
 // adapted from https://github.com/adafruit/Adafruit_DotStar/blob/master/Adafruit_DotStar.cpp#L658
@@ -206,43 +237,43 @@ void patterns(int p) {
     pTick = 0;
     oldPattern = pattern;
   }
-////////////////////// Pattern 0: (no pattern; if you want the strip to clear when the strip is at pattern 0, set FADE_STRIP to -1)
-////////////////////// Pattern 1:
-  if (p==1) {
+
+//////////////////////
+  if (p==P_TELEOP) {
     fire(false);
     fadeStrip(32);
   } else
-////////////////////// Pattern 2:
-  if (p==2) {
+//////////////////////
+  if (p==P_DISABLED) {
     alternate(C_ORANGE,C_BLACK);
   } else
-////////////////////// Pattern 3:
-  if (p==3) {
+//////////////////////
+  if (p==P_AUTO) {
     fadeStrip(72);
     colorPixel(int(floor(pTick/2))%NUMPIXELS,C_BLUE);
     //colorPixel(int(floor(pTick*2/2))%NUMPIXELS,C_BLUE);
     colorPixel(NUMPIXELS-int(floor(pTick/2))%NUMPIXELS,C_BLUE);
   } else
-////////////////////// Pattern 4:
-  if (p==4) {
+//////////////////////
+  if (p==P_INTAKE) {
     colorPixelUsingSine(C_PURPLE);
   } else
-////////////////////// Pattern 5:
-  if (p==5) {
+//////////////////////
+  if (p==P_LIMELIGHT) {
     colorPixel(int(floor(pTick/2))%NUMPIXELS,C_GREEN);
   } else
-////////////////////// Pattern 6:
-  if (p==6) {
-    colorPixelUsingSine(C_ORANGE);
+//////////////////////
+  if (p==P_SHOOTING) {
+    colorPixelUsingSine(C_ORANGE, 2.4);
   } else
-////////////////////// Pattern 7:
-  if (p==7) {
+//////////////////////
+  if (p==P_CLIMBING) {
     fadeStrip(72);
     colorPixelFromIndex(int(floor(pTick/2))%NUMPIXELS);
     colorPixelFromIndex(int(floor(pTick+NUMPIXELS)/2)%NUMPIXELS);
-  } else
-////////////////////// Pattern 8:
-  if (p==8) {
+  } /*else
+//////////////////////
+  if (p==8) { // P_ALLIANCE
     // b.n. pattern:
     if (alliance == 1){
     fadeStrip(72);
@@ -255,11 +286,11 @@ void patterns(int p) {
     colorPixel(NUMPIXELS-int(floor(pTick/0.8))%NUMPIXELS,C_BLUE);
    }
   }
-////////////////////// Pattern 9:
-  if (p==9) {
+//////////////////////
+  if (p==9) { // P_ALLIANCE_FIRE
     fire(true);
     fadeStrip(16);
-  }
+  }*/
 ////////////////////// Show pixels
   if (DIMMER > 0) fadeStrip(DIMMER);
   strip.show();
@@ -267,15 +298,46 @@ void patterns(int p) {
 
 void setup() {
   // start serial monitor (communication between arduino & pc)
-  Serial.begin(9600);
-  // start LED strip library
-  strip.begin();
-  strip.clear();
-  strip.show();
+  Serial.begin(SERIAL_BAUD);
+
   // if using cycle, make sure it starts within correct range
   if (USE_SERIAL != true && USE_CYCLE == true) {
     if (pattern > CYCLE_MAX || pattern < CYCLE_MIN) pattern=CYCLE_MIN;
   }
+
+  // init binary pin modes
+  pinMode(B_PIN_1, INPUT_PULLUP);
+  pinMode(B_PIN_2, INPUT_PULLUP);
+  pinMode(B_PIN_3, INPUT_PULLUP);
+  pinMode(B_PIN_4, INPUT_PULLUP);
+
+  // make sure no other modes etc. are using pin 13 to prevent interference with setting the status LED
+  if (
+    (SHOW_STATUS > 0) && ( // if SHOW_STATUS is enabled...
+      DATAPIN == 13 ||     // and also used by any core strip library pins...
+      CLOCKPIN == 13 || (
+        (USE_BINARY) && (  // or interfering with any binary input pins if enabled...
+          B_PIN_1 == 13 ||
+          B_PIN_2 == 13 ||
+          B_PIN_3 == 13 ||
+          B_PIN_4 == 13
+        )
+      )
+    )
+  ) { // then print a warning to the serial monitor
+    Serial.print(SM_PREFIX);
+    Serial.println(" - ! - WARNING - ! - One or more pins have been set to use pin #13, but SHOW_STATUS is also true! Refusing to both set pin 13's pinMode AND start LED library to prevent possible interference/damage to components, sorry for the inconvenience...");
+  } else { // or continue as normal if there is no issue
+    // Initialize the LED strip library
+    strip = Adafruit_DotStar(
+  NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_BGR);
+    if (SHOW_STATUS > 0) pinMode(13, OUTPUT);
+  }
+  
+  // start LED strip library
+  strip.begin();
+  strip.clear();
+  strip.show();
 }
 
 void loop() {
@@ -286,9 +348,12 @@ void loop() {
   if (USE_SERIAL == true) {
     pattern = readSerial();
     patterns(pattern);
-    //Serial.println(pattern);
-  }
-  else if (USE_CYCLE == true) {
+  } else if (USE_BINARY == true) {
+    //Serial.print(SM_PREFIX); Serial.print(" Binary mode: old pattern: #"); Serial.print(pattern); 
+    pattern = readPins();
+    //Serial.print(SM_PREFIX); Serial.print(" Binary mode: current pattern: #"); Serial.println(pattern);
+    patterns(pattern);
+  } else {
     // update cycle pattern if necessary
     if ((tick*LOOP_DELAY)/2 > CYCLE_DELAY) {
       tick=0; pattern++;
@@ -301,6 +366,12 @@ void loop() {
   
   // delay between loops
   delay(LOOP_DELAY);
+  // if SHOW_STATUS is enabled (by being above 0), toggle the built-in LED
+  if (SHOW_STATUS > 0) {
+    sTick += 1; if (!(sTick < SHOW_STATUS)) {sTick = 0; showStatus = !showStatus;}
+    if (showStatus) digitalWrite(13,HIGH); else digitalWrite(13,LOW);
+    
+  }
   if (FADE_STRIP > 0) fadeStrip(FADE_STRIP);
   else if (FADE_STRIP == -1) strip.clear();
 }
