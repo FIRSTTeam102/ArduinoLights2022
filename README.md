@@ -5,7 +5,7 @@
 Patterns that use the `alliance` variable (and can change color based on which alliance we are on) are marked with '*'
 
 | Enum | Name | Description |
-| ---- | ---- | ----------- ||
+| ---- | ---- | ----------- |
 | 0 | `P_DISABLED` | ⛔ Alternating orange & black/off |
 | 1 | `P_DEFAULT`* | 🔥 "It's fire" |
 | 2 | `P_AUTO` | 🔁 Opposing blue sliders |
