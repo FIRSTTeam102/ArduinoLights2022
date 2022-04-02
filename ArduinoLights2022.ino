@@ -38,7 +38,7 @@
 #define SM_PREFIX      "[led_strip_2022]"        // Prefix for printing to the serial monitor
 // we should use this but we're already using pin 13...
 #define SHOW_STATUS    0        // If greater than 0, toggle the built-in LED every SHOW_STATUS ticks (approx. every # / LOOP_DELAY milliseconds)
-#define INIT_ALLIANCE  1        // Initial alliance; 0 for blue alliance, 1 for red alliance
+#define INIT_ALLIANCE  0        // Initial alliance; 0 for blue alliance, 1 for red alliance
 #define INIT_PTN       1        // Initial light pattern (change this to change the first pattern when the program starts)
 #define REVERSE_DIR    true     // Thanks to @caburum for helping debug this! If true, reverses the strip's pixel order (1 becomes last, 2 becomes second-to-last etc.)
 #define USE_SERIAL     false    // Use serial input to determine pattern (serial mode takes precedence over cycle mode if both are true)
@@ -119,7 +119,7 @@ int readSerial() {
     while (i < total) {
       inp = Serial.read();
       // read alliance from serial if available (could cause issues with inputs like '123r')
-      if (tolower(inp) == 'b') {alliance=2; return pattern;}
+      if (tolower(inp) == 'b') {alliance=0; return pattern;}
       else if (tolower(inp) == 'r') {alliance=1; return pattern;}
       else if (isDigit(inp)) {msg[i]=inp;}
       else if (!(inp == '\n' || inp == '\r')) {break;}
