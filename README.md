@@ -7,7 +7,7 @@ Patterns that use the `alliance` variable (and can change color based on which a
 | Enum | Name | Description |
 | ---- | ---- | ----------- |
 | 0 | `P_DISABLED` | ⛔ Alternating orange & black/off |
-| 1 | `P_DEFAULT`* | 🔥 "It's fire" |
+| 1 | `P_TELEOP`* | 🔥 "It's fire" |
 | 2 | `P_AUTO` | 🔁 Opposing blue sliders |
 | 4 | `P_INTAKE` | 🟣 Purple sine slider on black/off background |
 | 5 | `P_LIMELIGHT` | 🟢 Green (lime) slider on black/off background |

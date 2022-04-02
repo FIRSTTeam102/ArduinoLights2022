@@ -6,7 +6,7 @@
 * @remark There are 3 operation modes (by setting their global pre-compiled vars to true/false): USE_SERIAL & USE_BINARY (USE_SERIAL takes precedence) with a fallback to cycling through;
 * @remark USE_SERIAL relies on numerical serial input to change the current pattern while USE_CYCLE switches between different patterns after some time
 * @remark Sending 'b' or 'r' to the serial input will change the alliance mode, which will alter certain patterns
-* @remark (for now, it's only implemented by P_DEFAULT, P_ALLIANCE, and P_A_FIRE)
+* @remark (for now, it's only implemented by P_TELEOP)
 * @remark Reversing the strip (switching the pixel order e.g. 1 to 30, 2 to 29, etc.) is now as easy as setting REVERSE_DIR to true!
 * 
 * @see "/README.md"
@@ -239,13 +239,13 @@ void patterns(int p) {
   }
 
 //////////////////////
+  if (p==P_DISABLED) {
+    alternate(C_ORANGE,C_BLACK);
+  } else
+//////////////////////
   if (p==P_TELEOP) {
     fire(false);
     fadeStrip(32);
-  } else
-//////////////////////
-  if (p==P_DISABLED) {
-    alternate(C_ORANGE,C_BLACK);
   } else
 //////////////////////
   if (p==P_AUTO) {
@@ -254,6 +254,7 @@ void patterns(int p) {
     //colorPixel(int(floor(pTick*2/2))%NUMPIXELS,C_BLUE);
     colorPixel(NUMPIXELS-int(floor(pTick/2))%NUMPIXELS,C_BLUE);
   } else
+//////////////////////
 //////////////////////
   if (p==P_INTAKE) {
     colorPixelUsingSine(C_PURPLE);
